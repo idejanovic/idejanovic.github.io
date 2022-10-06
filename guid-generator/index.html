@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+	<style>
+		*  {
+			font-family: monospace;
+			margin-top: 6px;
+		}
+
+		#textToConvert {
+			width: 130px;
+		}
+		#result {
+			width: 290px;
+		}
+	</style>
+		<script type="text/javascript">
+			function convert() {
+				const input = document.querySelector('#textToConvert')
+				input.value = (input.value + '!!!!!!!!!!!!!!!!').substring(0, 16)
+				const charCodeArr = []
+				for(let i = 0; i < input.value.length; i++){
+				    let code = input.value.charCodeAt(i).toString(16)
+    				charCodeArr.push(code)
+					console.log(input.value[i], 'to', code)
+				}
+				const resultElement = document.querySelector('#result')
+				resultElement.value = charCodeArr.join('').replace(/(........)(....)(....)(....)(............)/, '$1-$2-$3-$4-$5')
+			}
+			function init() {
+				const input = document.querySelector('#textToConvert')
+				const params = {}
+				location.search.replace(/[?&]([^?&#]+)=([^&#]+)/g, (x, y, z) => params[y] = z)
+				if (params['text']) {
+					input.value = params['text'].substr(0, 16)
+					convert()
+				}	
+				input.addEventListener("keyup", e => {console.log(e); (e.key === 'Enter' || e.keyCode === 13) && convert()});
+			}
+
+		</script>
+	</head>
+	<body onload="init()">
+		<label for="textToConvert">Give a piece of text:</label>
+		<input id="textToConvert" name="textToConvert" type="text" maxlength="16" />
+		<button onclick="convert()">Go!</button>
+		<br/>
+		<label for="result">GUID:</label>
+		<input id="result" name="result" type="text" maxlength="36" readonly />
+	</body>
+</html>
