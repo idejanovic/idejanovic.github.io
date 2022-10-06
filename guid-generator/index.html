@@ -29,12 +29,12 @@
 			function init() {
 				const input = document.querySelector('#textToConvert')
 				const params = {}
-				location.search.replace(/[?&]([^?&#]+)=([^&#]+)/g, (x, y, z) => params[y] = z)
+				location.search.replace(/[?&]([^?&#]+)=([^&#]+)/g, (x, y, z) => params[decodeURIComponent(y)] = decodeURIComponent(z))
 				if (params['text']) {
 					input.value = params['text'].substr(0, 16)
 					convert()
 				}	
-				input.addEventListener("keyup", e => {console.log(e); (e.key === 'Enter' || e.keyCode === 13) && convert()});
+				input.addEventListener("keyup", e => {(e.key === 'Enter' || e.keyCode === 13) && convert()});
 			}
 
 		</script>
