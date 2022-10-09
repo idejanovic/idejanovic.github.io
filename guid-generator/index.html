@@ -5,15 +5,35 @@
 			font-family: monospace;
 			margin-top: 6px;
 		}
-
-		#textToConvert {
+		#textToConvert, #textResult {
 			width: 130px;
 		}
-		#result {
+		#guidResult,  #guidToConvert{
 			width: 290px;
+		}
+		.hide {
+			display: none;
+		}
+		.guid-to-text::before {
+			content: 'guid';
+		}
+		.guid-to-text::after {
+			content: 'text';
+		}
+		.text-to-guid::before {
+			content: 'text';
+		}
+		.text-to-guid::after {
+			content: 'guid';
+		}
+		.invalid {
+			border-color: red;
 		}
 	</style>
 		<script type="text/javascript">
+			/***
+			 * Converts 16 character inputs to a GUID using the ASCII code table
+			 */ 
 			function convert() {
 				const input = document.querySelector('#textToConvert')
 				input.value = (input.value + '!!!!!!!!!!!!!!!!').substring(0, 16)
@@ -21,30 +41,88 @@
 				for(let i = 0; i < input.value.length; i++){
 				    let code = input.value.charCodeAt(i).toString(16)
     				charCodeArr.push(code)
-					console.log(input.value[i], 'to', code)
 				}
-				const resultElement = document.querySelector('#result')
+				const resultElement = document.querySelector('#guidResult')
 				resultElement.value = charCodeArr.join('').replace(/(........)(....)(....)(....)(............)/, '$1-$2-$3-$4-$5')
 			}
+
+			/**
+			 * Converts a GUID into a string using ASCII code table
+			 */
+			const guidRegex = /^([0-9a-fA-F]{8})-?([0-9a-fA-F]{4})-?([0-9a-fA-F]{4})-?([0-9a-fA-F]{4})-?([0-9a-fA-F]{12})$/
+			function convertBack() {
+				const input = document.querySelector('#guidToConvert')
+
+				const matchingParts = input.value.match(guidRegex)
+				if (matchingParts === null) {
+					input.classList.add('invalid')
+					return
+				}
+				input.classList.remove('invalid')
+				const guid = matchingParts.slice(1, 6).join('')			
+
+				// separate by pairs of nibbles, for each pair of nibble get the ascii character and append it to the result string
+				const guidTuples = guid.match(/../g)
+				
+				const resultElement = document.querySelector('#textResult')
+				resultElement.value = String.fromCharCode(...guidTuples.map(x => parseInt('0x' + x)))
+			}
+
+			/**
+			 * Interprets  the URL parameters and appends the key listeners for the Enter key
+			 */
 			function init() {
 				const input = document.querySelector('#textToConvert')
+				const inputGuid = document.querySelector('#guidToConvert')
+				input.addEventListener("keyup", e => {(e.key === 'Enter' || e.keyCode === 13) && convert()});
+				inputGuid.addEventListener("keyup", e => {(e.key === 'Enter' || e.keyCode === 13) && convertBack()});
+				
 				const params = {}
 				location.search.replace(/[?&]([^?&#]+)=([^&#]+)/g, (x, y, z) => params[decodeURIComponent(y)] = decodeURIComponent(z))
 				if (params['text']) {
 					input.value = params['text'].substr(0, 16)
 					convert()
-				}	
-				input.addEventListener("keyup", e => {(e.key === 'Enter' || e.keyCode === 13) && convert()});
+				}
+				if (params['guid']) {
+					inputGuid.value = params['guid']
+					convertBack()
+				}
+				if (params['direction'] === 'guid2text') {
+					invert()
+				}
 			}
 
+			/**
+			 * Direction inverter
+			 */
+			function invert() {
+				const toggleClass = function (selector, ...classNames) {
+					const element = document.querySelector(selector)
+					classNames.map(className => element.classList.toggle(className))
+				}
+				toggleClass('#forward', 'hide')
+				toggleClass('#reverse', 'hide')
+				toggleClass('#direction', 'text-to-guid', 'guid-to-text')
+			}
 		</script>
 	</head>
 	<body onload="init()">
-		<label for="textToConvert">Give a piece of text:</label>
-		<input id="textToConvert" name="textToConvert" type="text" maxlength="16" />
-		<button onclick="convert()">Go!</button>
-		<br/>
-		<label for="result">GUID:</label>
-		<input id="result" name="result" type="text" maxlength="36" readonly />
+		<div id="forward">
+			<label for="textToConvert">Give a piece of text:</label>
+			<input id="textToConvert" name="textToConvert" type="text" maxlength="16" />
+			<button onclick="convert()">Go!</button>
+			<br/>
+			<label for="guidResult">GUID:</label>
+			<input id="guidResult" name="guidResult" type="text" maxlength="36" readonly />
+		</div>
+		<div id="reverse" class="hide">
+			<label for="guidToConvert">Give guid:</label>
+			<input id="guidToConvert" name="guidToConvert" type="text" maxlength="36" />
+			<button onclick="convertBack()">Go!</button>
+			<br/>
+			<label for="textResult">Translated:</label>
+			<input id="textResult" name="textResult" type="text" maxlength="16" readonly />
+		</div>
+		<button id="direction" onclick="invert()" class="guid-to-text"> > </button>
 	</body>
 </html>
